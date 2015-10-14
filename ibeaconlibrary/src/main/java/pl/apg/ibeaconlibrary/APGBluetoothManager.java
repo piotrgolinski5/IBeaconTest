@@ -50,7 +50,7 @@ public class APGBluetoothManager {
             mBluetoothAdapter = bluetoothManager.getAdapter();
 
             boolean flag = mBluetoothAdapter.startLeScan(mLeScanCallback);
-            if(!flag){
+            if (!flag) {
                 throw new NullBluetoothException();
             }
 
@@ -120,8 +120,14 @@ public class APGBluetoothManager {
         }
 
         private void addOrModifyIBeacon(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord) {
+
+            for (IBeaconValidator validator : mIBeaconValidators) {
+                if (!validator.isValid(device, rssi, deviceName, scanRecord)) {
+                    return;
+                }
+            }
+
             if (!mIBeacons.containsKey(device.getAddress())) {
-                //TODO dodac walidacje
                 addIBeacon(device, rssi, deviceName, scanRecord);
             } else {
                 IBeacon ibeacon = mIBeacons.get(device.getAddress());
@@ -157,21 +163,139 @@ public class APGBluetoothManager {
             iBeacon = entry.getValue();
 
             if (iBeacon.checkTimeout() > BEACON_TIMEOUT_IN_SECONDS) {
-                 String deviceName = iBeacon.getDeviceName();
-                 L.e(StringUtils.addStrings("timeout ", deviceName));
-                 mIBeacons.remove(iBeacon.getAddress());
+                String deviceName = iBeacon.getDeviceName();
+                L.e(StringUtils.addStrings("timeout ", deviceName));
+                mIBeacons.remove(iBeacon.getAddress());
+
+                for (OnBeaconTimeOutListener timeOutListener : mOnBeaconTimeOutListeners) {
+                    timeOutListener.onBeaconTimeOut(iBeacon);
+                }
+
+                notifyOnBeaconListChanged();
+                notifyOnCountChanged();
             }
         }
     }
 
     /*Beacons*/
     public void addIBeacon(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord) {
-        IBeacon l = new IBeacon(device, rssi, deviceName);
-        mIBeacons.put(device.getAddress(), l);
+        IBeacon iBeacon = new IBeacon(device, rssi, deviceName);
+        mIBeacons.put(device.getAddress(), iBeacon);
+
+        for (OnBeaconAddedListener addedListener : mOnBeaconAddedListeners) {
+            addedListener.onBeaconAdded(iBeacon);
+        }
+
+        notifyOnBeaconListChanged();
+        notifyOnCountChanged();
     }
 
     public void resetIBeacons() {
         mIBeacons.clear();
+
+        notifyOnBeaconListChanged();
+        notifyOnCountChanged();
     }
+
+    /*Listeners*/
+    private List<OnCountChangedListner> mOnCountChangedListners = new ArrayList<>();
+
+    public interface OnCountChangedListner {
+        void onCountChanged(int count);
+    }
+
+    public void setOnCountChangedListner(OnCountChangedListner listener) {
+        mOnCountChangedListners.add(listener);
+    }
+
+    public void removeOnCountChangedListner(OnCountChangedListner listener) {
+        mOnCountChangedListners.add(listener);
+    }
+
+    private void notifyOnCountChanged() {
+        for (OnCountChangedListner countChangedListner : mOnCountChangedListners) {
+            countChangedListner.onCountChanged(mIBeacons.size());
+        }
+    }
+
+    //##
+
+    private List<OnBeaconAddedListener> mOnBeaconAddedListeners = new ArrayList<>();
+
+    public interface OnBeaconAddedListener {
+        void onBeaconAdded(IBeacon beacon);
+    }
+
+    public void setOnBeaconAddedListener(OnBeaconAddedListener listener) {
+        mOnBeaconAddedListeners.add(listener);
+    }
+
+    public void removeOnBeaconAddedListener(OnBeaconAddedListener listener) {
+        mOnBeaconAddedListeners.add(listener);
+    }
+
+    //##
+
+    private List<OnBeaconTimeOutListener> mOnBeaconTimeOutListeners = new ArrayList<>();
+
+    public interface OnBeaconTimeOutListener {
+        void onBeaconTimeOut(IBeacon beacon);
+    }
+
+    public void setOnBeaconTimeOutListener(OnBeaconTimeOutListener listener) {
+        mOnBeaconTimeOutListeners.add(listener);
+    }
+
+    public void removeOnBeaconTimeOutListener(OnBeaconTimeOutListener listener) {
+        mOnBeaconTimeOutListeners.add(listener);
+    }
+
+    //##
+
+    private List<OnBeaconListChangedListener> mOnBeaconListChangedListeners = new ArrayList<>();
+
+    public interface OnBeaconListChangedListener {
+        void onBeaconListChangedListener(List<IBeacon> beacons);
+    }
+
+    public void setOnBeaconListChangedListener(OnBeaconListChangedListener listener) {
+        mOnBeaconListChangedListeners.add(listener);
+    }
+
+    public void removeOnBeaconListChangedListener(OnBeaconListChangedListener listener) {
+        mOnBeaconListChangedListeners.add(listener);
+    }
+
+    private void notifyOnBeaconListChanged() {
+        for (OnBeaconListChangedListener beaconListChangedListener : mOnBeaconListChangedListeners) {
+            beaconListChangedListener.onBeaconListChangedListener(new ArrayList<IBeacon>(mIBeacons.values()));
+        }
+    }
+
+    //##
+
+    public void setOnLeScanCallback(BluetoothAdapter.LeScanCallback callback) {
+        mLeScanCallbacks.add(callback);
+    }
+
+    public void removeOnLeScanCallback(BluetoothAdapter.LeScanCallback callback) {
+        mLeScanCallbacks.add(callback);
+    }
+
+    //##
+    private List<IBeaconValidator> mIBeaconValidators = new ArrayList<>();
+
+    public interface IBeaconValidator {
+        boolean isValid(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord);
+    }
+
+    public void setIBeaconValidator(IBeaconValidator validator) {
+        mIBeaconValidators.add(validator);
+    }
+
+    public void removeIBeaconValidator(IBeaconValidator validator) {
+        mIBeaconValidators.remove(validator);
+    }
+
 
 }
