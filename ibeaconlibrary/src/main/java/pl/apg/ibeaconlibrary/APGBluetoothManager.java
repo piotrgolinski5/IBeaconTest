@@ -27,7 +27,7 @@ public class APGBluetoothManager {
     private Timer mTimeOutTimer, mScanResetTimer;
     private ConcurrentHashMap<String, IBeacon> mIBeacons = new ConcurrentHashMap<String, IBeacon>();
     private List<BluetoothAdapter.LeScanCallback> mLeScanCallbacks = new ArrayList<BluetoothAdapter.LeScanCallback>();
-    private final static int THREAD_DELAY_IN_SECONDS = 50;
+    private final static int THREAD_DELAY = 1000;
     private final static int BEACON_TIMEOUT_IN_SECONDS = 10;
     private static int mNearRssi = -25, mMaxRssi = -101;
 
@@ -74,7 +74,7 @@ public class APGBluetoothManager {
             };
 
             mTimeOutTimer.schedule(timeoutTimerTask, 0, 1000);
-            mScanResetTimer.schedule(scanResetTimerTask, 5000, THREAD_DELAY_IN_SECONDS * 500);
+            mScanResetTimer.schedule(scanResetTimerTask, THREAD_DELAY, THREAD_DELAY);
         }
     }
 
@@ -105,6 +105,7 @@ public class APGBluetoothManager {
 
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+            L.e("onLeScan");
             if (device.getName() != null && !device.getName().trim().equals("")) {
                 String deviceName = device.getName();
                 if (rssi > -50) {

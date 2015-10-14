@@ -29,10 +29,10 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         mAPGBluetoothManager.startManager(MainActivity.this);
 
-        mAPGBluetoothManager.setIBeaconValidator(new APGBluetoothManager.IBeaconValidator() {
+        /*mAPGBluetoothManager.setIBeaconValidator(new APGBluetoothManager.IBeaconValidator() {
             @Override
             public boolean isValid(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord) {
-                L.e("isValid");
+                L.d("isValid");
                 return true;
             }
         });
@@ -40,30 +40,30 @@ public class MainActivity extends AppCompatActivity {
         mAPGBluetoothManager.setOnBeaconAddedListener(new APGBluetoothManager.OnBeaconAddedListener() {
             @Override
             public void onBeaconAdded(IBeacon beacon) {
-                L.e("onBeaconAdded");
+                L.d("onBeaconAdded");
             }
         });
 
         mAPGBluetoothManager.setOnBeaconTimeOutListener(new APGBluetoothManager.OnBeaconTimeOutListener() {
             @Override
             public void onBeaconTimeOut(IBeacon beacon) {
-                L.e("onBeaconTimeOut");
+                L.d("onBeaconTimeOut");
             }
         });
 
         mAPGBluetoothManager.setOnCountChangedListner(new APGBluetoothManager.OnCountChangedListner() {
             @Override
             public void onCountChanged(int count) {
-                L.e("onCountChanged");
+                L.d("onCountChanged");
             }
         });
 
         mAPGBluetoothManager.setOnBeaconListChangedListener(new APGBluetoothManager.OnBeaconListChangedListener() {
             @Override
             public void onBeaconListChangedListener(List<IBeacon> beacons) {
-                L.e("onBeaconListChangedListener");
+                L.d("onBeaconListChangedListener");
             }
-        });
+        });*/
 
     }
 
