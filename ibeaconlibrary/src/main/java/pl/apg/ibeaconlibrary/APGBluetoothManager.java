@@ -180,7 +180,7 @@ public class APGBluetoothManager {
 
     /*Beacons*/
     public void addIBeacon(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord) {
-        IBeacon iBeacon = new IBeacon(device, rssi, deviceName);
+        IBeacon iBeacon = new IBeacon(device, rssi, deviceName, scanRecord);
         mIBeacons.put(device.getAddress(), iBeacon);
 
         for (OnBeaconAddedListener addedListener : mOnBeaconAddedListeners) {
@@ -298,5 +298,8 @@ public class APGBluetoothManager {
         mIBeaconValidators.remove(validator);
     }
 
+    public List<IBeacon> getList(){
+        return new ArrayList<IBeacon>(mIBeacons.values());
+    }
 
 }
