@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -13,7 +15,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import pl.apg.ibeaconlibrary.enums.BeaconType;
 import pl.apg.ibeaconlibrary.exceptions.NullBluetoothException;
+import pl.apg.ibeaconlibrary.interfaces.OnUserPositionChangedListener;
+import pl.apg.ibeaconlibrary.utils.DiscoveryUtils;
 import pl.apg.ibeaconlibrary.utils.L;
 import pl.apg.ibeaconlibrary.utils.StringUtils;
 
@@ -21,6 +26,7 @@ public class APGBluetoothManager {
     private static volatile APGBluetoothManager mSharedInstance;
     private Context mContext;
     private BluetoothAdapter mBluetoothAdapter;
+    private LocationManager mLocationManager;
 
     public String mStickyBeacon = "";
     private boolean mIsScanning = false;
@@ -30,6 +36,7 @@ public class APGBluetoothManager {
     private final static int THREAD_DELAY = 1000;
     private final static int BEACON_TIMEOUT_IN_SECONDS = 10;
     private static int mNearRssi = -25, mMaxRssi = -101;
+    private BeaconType mBeaconType;
 
     public static APGBluetoothManager getInstance() {
         if (mSharedInstance == null) {
@@ -39,6 +46,16 @@ public class APGBluetoothManager {
     }
 
     private APGBluetoothManager() {
+        mLocationManager = new LocationManager();
+        mLocationManager.loadData();
+        mLocationManager.addOnUserPositionChanged(new OnUserPositionChangedListener() {
+            @Override
+            public void positionChanged(LatLng position, double estimatedError, int type) {
+                for(OnUserPositionChangedListener listener : mPositionList){
+                    listener.positionChanged(position, estimatedError, type);
+                }
+            }
+        });
     }
 
     /*Scan*/
@@ -73,7 +90,7 @@ public class APGBluetoothManager {
                 }
             };
 
-            mTimeOutTimer.schedule(timeoutTimerTask, 0, 1000);
+            mTimeOutTimer.schedule(timeoutTimerTask, 0, 500);
             mScanResetTimer.schedule(scanResetTimerTask, THREAD_DELAY, THREAD_DELAY);
         }
     }
@@ -121,6 +138,15 @@ public class APGBluetoothManager {
         }
 
         private void addOrModifyIBeacon(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord) {
+            if(mBeaconType == BeaconType.EDDY_STONE){
+                if(!DiscoveryUtils.isEddystoneSpecificFrame(scanRecord)){
+                    return;
+                }
+            }else{
+                if(DiscoveryUtils.isEddystoneSpecificFrame(scanRecord)){
+                    return;
+                }
+            }
 
             for (IBeaconValidator validator : mIBeaconValidators) {
                 if (!validator.isValid(device, rssi, deviceName, scanRecord)) {
@@ -157,6 +183,7 @@ public class APGBluetoothManager {
     }
 
     private void checkTimeouts() {
+        float sumDistance = 0;
         IBeacon iBeacon = null;
         Iterator<Map.Entry<String, IBeacon>> it = mIBeacons.entrySet().iterator();
         while (it.hasNext()) {
@@ -174,13 +201,29 @@ public class APGBluetoothManager {
 
                 notifyOnBeaconListChanged();
                 notifyOnCountChanged();
+            }else{
+                if (iBeacon.getDistanceForAlgorithm() > 0 && iBeacon.mPosition != null) {
+                    sumDistance += iBeacon.getDistanceForAlgorithm();
+                }
             }
         }
+
+        mLocationManager.calculatePositionWithTriateration(sumDistance,getList());
+        mLocationManager.calculatePositionWithMINMAX(getList());
+        mLocationManager.calculatePositionWithMaximumProbability(getList());
     }
 
     /*Beacons*/
     public void addIBeacon(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord) {
         IBeacon iBeacon = new IBeacon(device, rssi, deviceName, scanRecord);
+
+        LocationManager.LocationBeacon locationBeacon = mLocationManager.getLocationBeacon(device.getAddress());
+        if(locationBeacon != null){
+            iBeacon.mPosition = new LatLng(locationBeacon.lat, locationBeacon.lng);
+            iBeacon.mName = locationBeacon.name;
+        }
+
+
         mIBeacons.put(device.getAddress(), iBeacon);
 
         for (OnBeaconAddedListener addedListener : mOnBeaconAddedListeners) {
@@ -302,4 +345,12 @@ public class APGBluetoothManager {
         return new ArrayList<IBeacon>(mIBeacons.values());
     }
 
+    public void setBeaconTypeScan(BeaconType beaconType){
+        mBeaconType = beaconType;
+    }
+
+    private List<OnUserPositionChangedListener> mPositionList = new ArrayList<OnUserPositionChangedListener>();
+    public void addOnUserPositionChanged(OnUserPositionChangedListener listener) {
+        mPositionList.add(listener);
+    }
 }
