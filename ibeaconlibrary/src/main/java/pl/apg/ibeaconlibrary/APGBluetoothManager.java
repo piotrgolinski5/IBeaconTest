@@ -30,7 +30,7 @@ public class APGBluetoothManager {
 
     public String mStickyBeacon = "";
     private boolean mIsScanning = false;
-    private Timer mTimeOutTimer, mScanResetTimer;
+    private Timer mTimeOutTimer, mScanResetTimer, mLocationTimer;
     private ConcurrentHashMap<String, IBeacon> mIBeacons = new ConcurrentHashMap<String, IBeacon>();
     private List<BluetoothAdapter.LeScanCallback> mLeScanCallbacks = new ArrayList<BluetoothAdapter.LeScanCallback>();
     private final static int THREAD_DELAY = 1000;
@@ -74,24 +74,31 @@ public class APGBluetoothManager {
             mIsScanning = true;
 
             mTimeOutTimer = new Timer();
-            mScanResetTimer = new Timer();
-
             TimerTask timeoutTimerTask = new TimerTask() {
                 @Override
                 public void run() {
                     timeoutScan();
                 }
             };
+            mTimeOutTimer.schedule(timeoutTimerTask, 0, 1000);
 
+            mScanResetTimer = new Timer();
             TimerTask scanResetTimerTask = new TimerTask() {
                 @Override
                 public void run() {
                     leScanReset();
                 }
             };
-
-            mTimeOutTimer.schedule(timeoutTimerTask, 0, 500);
             mScanResetTimer.schedule(scanResetTimerTask, THREAD_DELAY, THREAD_DELAY);
+
+            mLocationTimer = new Timer();
+            TimerTask locationTimerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    calculateLocation();
+                }
+            };
+            mLocationTimer.schedule(locationTimerTask, 1000, 50);
         }
     }
 
@@ -183,7 +190,7 @@ public class APGBluetoothManager {
     }
 
     private void checkTimeouts() {
-        float sumDistance = 0;
+
         IBeacon iBeacon = null;
         Iterator<Map.Entry<String, IBeacon>> it = mIBeacons.entrySet().iterator();
         while (it.hasNext()) {
@@ -201,16 +208,36 @@ public class APGBluetoothManager {
 
                 notifyOnBeaconListChanged();
                 notifyOnCountChanged();
-            }else{
+            }
+        }
+    }
+
+    /*Location*/
+    private List<OnUserPositionChangedListener> mPositionList = new ArrayList<OnUserPositionChangedListener>();
+    public void addOnUserPositionChanged(OnUserPositionChangedListener listener) {
+        mPositionList.add(listener);
+    }
+
+    private void calculateLocation(){
+        float sumDistance = 0;
+        IBeacon iBeacon = null;
+        Iterator<Map.Entry<String, IBeacon>> it = mIBeacons.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, IBeacon> entry = it.next();
+            iBeacon = entry.getValue();
+
+
                 if (iBeacon.getDistanceForAlgorithm() > 0 && iBeacon.mPosition != null) {
                     sumDistance += iBeacon.getDistanceForAlgorithm();
                 }
-            }
+
         }
 
-        mLocationManager.calculatePositionWithTriateration(sumDistance,getList());
-        mLocationManager.calculatePositionWithMINMAX(getList());
-        mLocationManager.calculatePositionWithMaximumProbability(getList());
+        List<IBeacon> list = getList();
+        mLocationManager.calculatePositionWithTriateration(sumDistance,list);
+        mLocationManager.calculatePositionWithMINMAX(list);
+        mLocationManager.calculatePositionWithMaximumProbability(list);
+        mLocationManager.userLocation(list);
     }
 
     /*Beacons*/
@@ -349,8 +376,5 @@ public class APGBluetoothManager {
         mBeaconType = beaconType;
     }
 
-    private List<OnUserPositionChangedListener> mPositionList = new ArrayList<OnUserPositionChangedListener>();
-    public void addOnUserPositionChanged(OnUserPositionChangedListener listener) {
-        mPositionList.add(listener);
-    }
+
 }

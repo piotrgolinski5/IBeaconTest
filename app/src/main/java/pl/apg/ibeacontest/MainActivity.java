@@ -36,34 +36,43 @@ public class MainActivity extends AppCompatActivity {
     private GoogleMap mGoogleMap;
     private List<Marker> mMarkers = new ArrayList<>();
     private Marker[] mUserMarker;
-class asd implements Runnable{
-    LatLng position;
-    int type;
-    asd(LatLng position, int type){
-        this.position = position;
-        this.type = type;
-    }
-    @Override
-    public void run() {
-        if(mUserMarker[type] == null){
-            if(type == 0) {
-                mUserMarker[type] = mGoogleMap.addMarker(new MarkerOptions().position(position)
-                        .icon(BitmapDescriptorFactory
-                                .defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
-            } else if(type == 1){
-                mUserMarker[type] = mGoogleMap.addMarker(new MarkerOptions().position(position)
-                        .icon(BitmapDescriptorFactory
-                                .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-            }else if(type == 2){
-                mUserMarker[type] = mGoogleMap.addMarker(new MarkerOptions().position(position)
-                        .icon(BitmapDescriptorFactory
-                                .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+
+    class asd implements Runnable {
+        LatLng position;
+        int type;
+
+        asd(LatLng position, int type) {
+            this.position = position;
+            this.type = type;
+        }
+
+        @Override
+        public void run() {
+            if (mUserMarker[type] == null) {
+                if (type == 0) {
+                    mUserMarker[type] = mGoogleMap.addMarker(new MarkerOptions().position(position)
+                            .icon(BitmapDescriptorFactory
+                                    .defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+                } else if (type == 1) {
+                    mUserMarker[type] = mGoogleMap.addMarker(new MarkerOptions().position(position)
+                            .icon(BitmapDescriptorFactory
+                                    .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                } else if (type == 2) {
+                    mUserMarker[type] = mGoogleMap.addMarker(new MarkerOptions().position(position)
+                            .icon(BitmapDescriptorFactory
+                                    .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                }
+                else if (type == 3) {
+                    mUserMarker[type] = mGoogleMap.addMarker(new MarkerOptions().position(position)
+                            .icon(BitmapDescriptorFactory
+                                    .defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+                }
+            } else {
+                mUserMarker[type].setPosition(position);
             }
-        }else{
-            mUserMarker[type].setPosition(position);
         }
     }
-}
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,14 +81,14 @@ class asd implements Runnable{
         mListView = (ListView) findViewById(R.id.activity_main_lvList);
         mAdapter = new IBeaconListAdapter(this);
         mListView.setAdapter(mAdapter);
-        mUserMarker = new Marker[3];
+        mUserMarker = new Marker[4];
         mIBeaconLibraryManager = new IBeaconLibraryManager();
         mAPGBluetoothManager = mIBeaconLibraryManager.getAPGBluetoothManager();
         mAPGBluetoothManager.setBeaconTypeScan(BeaconType.EDDY_STONE);
         mAPGBluetoothManager.addOnUserPositionChanged(new OnUserPositionChangedListener() {
             @Override
-            public void positionChanged( LatLng position, double estimatedError, int type) {
-                runOnUiThread(new asd(position,type));
+            public void positionChanged(LatLng position, double estimatedError, int type) {
+                runOnUiThread(new asd(position, type));
 
             }
         });
@@ -89,10 +98,7 @@ class asd implements Runnable{
             @Override
             public void onMapReady(GoogleMap googleMap) {
                 mGoogleMap = googleMap;
-                LatLng latLng = new LatLng(0 , 0);
-                /*googleMap.addMarker(new MarkerOptions().position(latLng)
-                        .icon(BitmapDescriptorFactory
-                                .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));*/
+                LatLng latLng = new LatLng(0, 0);
                 googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 203));
             }
         });
@@ -103,16 +109,12 @@ class asd implements Runnable{
             return;
         }
 
-         for (IBeacon beacon : mAPGBluetoothManager.getList()) {
-        //    LatLng l = DistanceUtils.calcEndPoint(sydney, DistanceUtils.getFilteredDistance(mAPGBluetoothManager.getList().get(i)), 1);
-        //    L.e(StringUtils.addStrings("#", l.latitude, " ", l.longitude));
-
-             if(beacon.mMarker == null && beacon.mPosition != null) {
-                 beacon.mMarker =  mGoogleMap.addMarker(new MarkerOptions().position(beacon.mPosition)
-                         .icon(BitmapDescriptorFactory
-                                 .defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-             }
-            //mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 17));
+        for (IBeacon beacon : mAPGBluetoothManager.getList()) {
+            if (beacon.mMarker == null && beacon.mPosition != null) {
+                beacon.mMarker = mGoogleMap.addMarker(new MarkerOptions().position(beacon.mPosition)
+                        .icon(BitmapDescriptorFactory
+                                .defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+            }
         }
     }
 

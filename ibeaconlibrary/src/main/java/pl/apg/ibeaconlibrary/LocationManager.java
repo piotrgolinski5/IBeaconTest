@@ -12,6 +12,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 import pl.apg.ibeaconlibrary.interfaces.OnUserPositionChangedListener;
@@ -58,10 +59,11 @@ public class LocationManager {
     }
 
     private boolean mFirstIteration = true;
-    private double[]  mFilteredLat = new double[3];
-    private double[] mFilteredLng = new double[3];
-    private double[] mCurrentLat = new double[3];
-    private double[] mCurrentLng = new double[3];
+    private static final int countOfAlghoritms = 4;
+    private double[]  mFilteredLat = new double[countOfAlghoritms];
+    private double[] mFilteredLng = new double[countOfAlghoritms];
+    private double[] mCurrentLat = new double[countOfAlghoritms];
+    private double[] mCurrentLng = new double[countOfAlghoritms];
     private final static double FILTERING_FACTOR = 0.03;
 
     private List<OnUserPositionChangedListener> mPositionList = new ArrayList<OnUserPositionChangedListener>();
@@ -115,7 +117,9 @@ public class LocationManager {
     }
 
     public LatLng getCurrentPosition(int type) {
-
+        if(type == 3 || type == 2 || type == 1){
+       //     return new LatLng(this.mCurrentLat[type], this.mCurrentLng[type]);
+        }
         this.mFilteredLat[type] = (this.mCurrentLat[type] * FILTERING_FACTOR) + (this.mFilteredLat[type] * (1.0 - FILTERING_FACTOR));
         this.mFilteredLng[type] = (this.mCurrentLng[type] * FILTERING_FACTOR) + (this.mFilteredLng[type] * (1.0 - FILTERING_FACTOR));
         LatLng p = new LatLng(this.mFilteredLat[type], this.mFilteredLng[type]);
@@ -363,6 +367,94 @@ public class LocationManager {
             double value = Math.pow(b.mPosition.longitude, 2) - Math.pow(xNValue, 2) + Math.pow(b.mPosition.latitude, 2) - Math.pow(yNValue, 2) + Math.pow(dNValue, 2)
                     - Math.pow(beaconList.get(row).getDistance(), 2);
             matrixB.add(row, 0, value);
+        }
+    }
+    //########
+    public void userLocation(List<IBeacon> beaconsList) {
+        double x_user = 0;
+        double y_user = 0;
+        double r_user = 1;
+
+        // Check for legitimate beacons, those who have been selected within the area.
+        ArrayList<double[]> circleArray = new ArrayList<double[]>();
+        for (IBeacon b : beaconsList) {
+
+            double r;
+            try {
+                r =b.getDistanceForAlgorithm();
+            } catch (NullPointerException e) {
+                continue;
+            }
+            double x = b.mPosition.longitude;//preferences.getFloat("x" + minorVal, -1);
+            double y = b.mPosition.latitude;//preferences.getFloat("y" + minorVal, 0);
+            double z = 1;//preferences.getFloat("z" + minorVal, 0);
+            if (x >= 0 && y >= 0) {
+                // Remove the height difference between the phone and beacon from the distance.
+                r = (double) Math.sqrt((r * r) - (z * z));
+                circleArray.add(new double[]{x, y, r});
+                x_user += x;
+                y_user += y;
+            }
+        }
+
+        // Only calculate the position when 2 or more beacons are available.
+        double circleNumber = circleArray.size();
+        if (circleNumber < 2) {
+            // new double[]{x_user, y_user, r_user};
+            this.mCurrentLng[3] = y_user;
+            this.mCurrentLat[3] = x_user;
+
+            for (OnUserPositionChangedListener l : mPositionList) {
+                l.positionChanged(getCurrentPosition(3), this.mMinMaxEstimatedError,3);
+            }
+        }
+
+        // The average position between all the valid circles.
+        x_user = x_user / circleNumber;
+        y_user /= circleNumber;
+
+        double prev1Error = 0;
+        double currentError = 1000000;
+
+        // If the last error is the same as the current error no better value will be calculated.
+        while (prev1Error != currentError) {
+            prev1Error = currentError;
+            // Calculate the position up, down, left and right of the current one to calculate its error there.
+            ArrayList<double[]> newPositions = new ArrayList<double[]>();
+            newPositions.add(new double[]{(double) (x_user + 0.1), y_user});
+            newPositions.add(new double[]{(double) (x_user - 0.1), y_user});
+            newPositions.add(new double[]{x_user, (double) (y_user + 0.1)});
+            newPositions.add(new double[]{x_user, (double) (y_user - 0.1)});
+
+            // For each position in a direction calculate the error.
+            for (double[] direction : newPositions) {
+                double error = 0;
+                ArrayList<Double> dist = new ArrayList<Double>();
+
+                // The error on a certain position for each beacon.
+                for (int i = 0; i < circleNumber; i++) {
+                    double[] circlePos = circleArray.get(i);
+                    dist.add((double) (Math.sqrt(Math.pow(circlePos[0] - direction[0], 2) +
+                            Math.pow(circlePos[1] - direction[1], 2)) - circlePos[2]));
+                    error += Math.pow(dist.get(dist.size() - 1), 2);
+                }
+                error = (float) Math.sqrt(error);
+
+                // If the error is smaller we take the values.
+                if (error < currentError) {
+                    Collections.sort(dist);
+//                    r_user = dist.get(dist.size() - 1);
+                    x_user = direction[0];
+                    y_user = direction[1];
+                    currentError = error;
+                }
+            }
+        }
+        this.mCurrentLng[3] = y_user;
+        this.mCurrentLat[3] = x_user;
+
+        for (OnUserPositionChangedListener l : mPositionList) {
+            l.positionChanged(getCurrentPosition(3), this.mMinMaxEstimatedError,3);
         }
     }
 
