@@ -1,1 +1,1 @@
-include ':app', ':ibeaconlibrary'
+include ':app', ':ibeaconlibrary', ':samplebeacon'

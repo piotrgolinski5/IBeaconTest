@@ -12,12 +12,12 @@
         android:id="@+id/activity_main_lvList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="4" />
 
     <fragment
         android:id="@+id/activity_main_smfMap"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="4" />
+        android:layout_weight="1" />
 </LinearLayout>
