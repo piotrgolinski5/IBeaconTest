@@ -20,6 +20,12 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, BeaconRangeActivity.class));
             }
         });
+        findViewById(R.id.activity_main_btnRegions).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, RegionsActivity.class));
+            }
+        });
     }
 
 }

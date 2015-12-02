@@ -17,6 +17,7 @@
             </intent-filter>
         </activity>
         <activity android:name="pl.gg.samplebeacon.BeaconRangeActivity"></activity>
+        <activity android:name="pl.gg.samplebeacon.RegionsActivity"></activity>
     </application>
 
 </manifest>

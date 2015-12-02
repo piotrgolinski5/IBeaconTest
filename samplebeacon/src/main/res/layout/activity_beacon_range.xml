@@ -6,7 +6,7 @@
     <pl.gg.samplebeacon.views.GGCanvasView
         android:id="@+id/activity_beacon_range_vCanvas"
         android:layout_width="match_parent"
-        android:background="#F00"
+
         android:layout_height="match_parent" />
 
 </RelativeLayout>

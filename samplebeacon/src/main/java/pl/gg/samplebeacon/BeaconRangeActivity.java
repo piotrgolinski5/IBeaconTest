@@ -2,6 +2,7 @@ package pl.gg.samplebeacon;
 
 import android.app.Activity;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.List;
 import pl.gg.ibeaconlibrary.APGBluetoothManager;
 import pl.gg.ibeaconlibrary.IBeacon;
 import pl.gg.ibeaconlibrary.enums.BeaconType;
+import pl.gg.ibeaconlibrary.utils.DistanceUtils;
 import pl.gg.ibeaconlibrary.utils.L;
 import pl.gg.ibeaconlibrary.utils.StringUtils;
 import pl.gg.samplebeacon.views.GGCanvasView;
@@ -29,9 +31,10 @@ public class BeaconRangeActivity extends Activity {
 
         mCanvasView = (GGCanvasView) findViewById(R.id.activity_beacon_range_vCanvas);
         mCanvasView.setGGCanvasViewListener(mGGCanvasViewListener);
+        mCanvasView.setBackgroundColor(Color.parseColor("#2f343a"));
 
         mBluetoothManager = APGBluetoothManager.getInstance();
-        mBluetoothManager.setBeaconTypeScan(BeaconType.IBEACON);
+        mBluetoothManager.setBeaconTypeScan(BeaconType.ALL);
     }
 
     private GGCanvasView.GGCanvasViewListener mGGCanvasViewListener = new GGCanvasView.GGCanvasViewListener() {
@@ -39,20 +42,32 @@ public class BeaconRangeActivity extends Activity {
         public void onDraw(Canvas canvas) {
             if (mBeacons != null) {
                 Iterator<IBeacon> iterator = mBeacons.iterator();
-                int size = mBeacons.size() + 2;
+                int size = mBeacons.size() + 1;
                 int width = canvas.getWidth();
+                int height = canvas.getHeight();
 
                 int index = 1;
-                while (iterator.hasNext()) {
-                    mCanvasView.drawCircle(index * (width / size), 100, 5, canvas);
-                    //canvas.drawCircle(0,0,10,mCanvasView.getPaint() );
-                   // canvas.drawCircle(0,100,10,mCanvasView.getPaint() );
-                    //canvas.drawCircle(0,200,10,mCanvasView.getPaint() );
-                    //canvas.drawCircle(0,500,10,mCanvasView.getPaint() );
+                mCanvasView.setPaintColor(Color.WHITE);
+                mCanvasView.setPaintTextSize(14);
+                synchronized (mBeacons) {
+                    while (iterator.hasNext()) {
+                        IBeacon beacon = iterator.next();
+                        double distance = DistanceUtils.getFilteredDistance(beacon);
+                        int xPos = index * (width / size);
+                        int yPos = 100;
+                        int heightView = height - yPos - 50;
+                        yPos = (int) (heightView - (heightView * (distance/35))) + yPos;
+                        mCanvasView.drawText(((int)distance) + "", xPos, 30);
+                        mCanvasView.drawText(beacon.getDeviceName(), xPos, yPos - 60);
+                        mCanvasView.drawCircle(xPos, yPos, 50);
+                        index++;
+                    }
 
-                    //canvas.drawLine(0, 0, canvas.getWidth(),canvas.getHeight(), mCanvasView.getPaint() );
-                    index++;
                 }
+
+                mCanvasView.setPaintColor(Color.parseColor("#45d1a9"));
+                mCanvasView.drawText("User", width / 2, height - 140);
+                mCanvasView.drawCircle(width / 2, height - 100, 50);
             }
         }
     };
@@ -78,9 +93,9 @@ public class BeaconRangeActivity extends Activity {
         @Override
         public void onBeaconListChangedListener(List<IBeacon> beacons) {
             L.e(StringUtils.addStrings("onBeaconListChangedListener ", beacons.size()));
-            if(mBeacons == null) {
-                mBeacons = beacons;
-            }
+            // if (mBeacons == null) {
+            mBeacons = beacons;
+            //}
         }
     };
 }

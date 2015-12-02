@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -20,6 +21,8 @@ public class GGCanvasView extends View {
     private GGCanvasViewListener mGGCanvasViewListener;
     private Thread mDrawingThread;
     private Paint mPaint;
+    private Canvas mCanvas;
+    private int mBackgroundColor = -1;
     private boolean mIsDrawing = false;
 
     public GGCanvasView(Context c, AttributeSet attrs) {
@@ -28,7 +31,7 @@ public class GGCanvasView extends View {
         mPaint = new Paint();
         mPaint.setColor(Color.BLACK);
         mPaint.setAntiAlias(true);
-        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeWidth(1f);
         mPaint.setDither(true);
@@ -68,22 +71,35 @@ public class GGCanvasView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        mCanvas = canvas;
+        if(mBackgroundColor != -1){
+            canvas.drawColor(mBackgroundColor);
+        }
         mPaint.setColor(Color.BLACK);
-        //canvas.drawColor(Color.GREEN);
+
         if (mGGCanvasViewListener != null) {
              mGGCanvasViewListener.onDraw(canvas);
         }
-        mPaint.setColor(Color.YELLOW);
-        canvas.drawCircle(0, 0, 100, mPaint);
-
     }
 
     public void setGGCanvasViewListener(GGCanvasViewListener listener) {
         mGGCanvasViewListener = listener;
     }
 
-    public void drawCircle(int x, int y, int radius, Canvas canvas) {
-        canvas.drawCircle(x, y, radius, mPaint);
+    public void drawCircle(int x, int y, int radius) {
+        mCanvas.drawCircle(x, y, radius, mPaint);
+    }
+
+    public void drawRect(Rect rect) {
+        mCanvas.drawRect(rect.left,rect.top,rect.right,rect.bottom, mPaint);
+    }
+
+    public void drawLine(int x1, int y1,int x2, int y2) {
+        mCanvas.drawLine(x1, y1, x2, y2, mPaint);
+    }
+
+    public void drawText( String text, int x, int y) {
+        mCanvas.drawText(text, x, y, mPaint);
     }
 
     private Runnable mInvalidate = new Runnable() {
@@ -93,7 +109,18 @@ public class GGCanvasView extends View {
         }
     };
 
+    public void setBackgroundColor(int color){
+        mBackgroundColor = color;
+    }
+
     public Paint getPaint() {
         return mPaint;
+    }
+    public void setPaintColor(int color) {
+        mPaint.setColor(color);
+    }
+
+    public void setPaintTextSize(int size) {
+        mPaint.setTextSize(size);
     }
 }

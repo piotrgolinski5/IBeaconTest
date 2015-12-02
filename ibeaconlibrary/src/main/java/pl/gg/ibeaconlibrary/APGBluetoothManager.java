@@ -27,6 +27,7 @@ public class APGBluetoothManager {
     private Context mContext;
     private BluetoothAdapter mBluetoothAdapter;
     private LocationManager mLocationManager;
+    public static boolean IS_USER_BEACON_REQUIRED = false;
 
     public String mStickyBeacon = "";
     private boolean mIsScanning = false;
@@ -47,7 +48,7 @@ public class APGBluetoothManager {
 
     private APGBluetoothManager() {
         mLocationManager = new LocationManager();
-        mLocationManager.loadData();
+       // mLocationManager.loadData();
         mLocationManager.addOnUserPositionChanged(new OnUserPositionChangedListener() {
             @Override
             public void positionChanged(LatLng position, double estimatedError, int type) {
@@ -129,7 +130,7 @@ public class APGBluetoothManager {
 
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-            L.e("onLeScan");
+           // L.e("onLeScan");
             if (device.getName() != null && !device.getName().trim().equals("")) {
                 String deviceName = device.getName();
                 if (rssi > -50) {
@@ -164,10 +165,10 @@ public class APGBluetoothManager {
                 }
             }
 
-            if (!mIBeacons.containsKey(device.getAddress())) {
+            if (!mIBeacons.containsKey(deviceName)) {
                 addIBeacon(device, rssi, deviceName, scanRecord);
             } else {
-                IBeacon ibeacon = mIBeacons.get(device.getAddress());
+                IBeacon ibeacon = mIBeacons.get(deviceName);
                 if (ibeacon != null) {
                     ibeacon.setRSSI(rssi);
                 }
@@ -222,6 +223,10 @@ public class APGBluetoothManager {
         mPositionList.add(listener);
     }
 
+    public void removeOnUserPositionChanged(OnUserPositionChangedListener listener) {
+        mPositionList.remove(listener);
+    }
+
     private void calculateLocation() {
         float sumDistance = 0;
         IBeacon iBeacon = null;
@@ -238,24 +243,26 @@ public class APGBluetoothManager {
         }
 
         List<IBeacon> list = getList();
-        /*mLocationManager.calculatePositionWithTriateration(sumDistance,list);
-        mLocationManager.calculatePositionWithMINMAX(list);
+        mLocationManager.calculatePositionWithTriateration(sumDistance, list);
+        /*mLocationManager.calculatePositionWithMINMAX(list);
         mLocationManager.calculatePositionWithMaximumProbability(list);
         mLocationManager.userLocation(list);*/
     }
 
     /*Beacons*/
     public void addIBeacon(BluetoothDevice device, int rssi, String deviceName, byte[] scanRecord) {
-        IBeacon iBeacon = new IBeacon(device, rssi, deviceName, scanRecord);
 
-        LocationManager.LocationBeacon locationBeacon = mLocationManager.getLocationBeacon(device.getAddress());
+        IBeacon iBeacon = new IBeacon(device, rssi, deviceName, scanRecord);
+        LocationManager.LocationBeacon locationBeacon = mLocationManager.getLocationBeacon(deviceName);
         if (locationBeacon != null) {
             iBeacon.mPosition = new LatLng(locationBeacon.lat, locationBeacon.lng);
             iBeacon.mName = locationBeacon.name;
+        }else if(IS_USER_BEACON_REQUIRED == true){
+            return;
         }
 
 
-        mIBeacons.put(device.getAddress(), iBeacon);
+        mIBeacons.put(deviceName, iBeacon);
 
         for (OnBeaconAddedListener addedListener : mOnBeaconAddedListeners) {
             addedListener.onBeaconAdded(iBeacon);
@@ -380,5 +387,7 @@ public class APGBluetoothManager {
         mBeaconType = beaconType;
     }
 
-
+    public LocationManager getLocationManager() {
+        return mLocationManager;
+    }
 }

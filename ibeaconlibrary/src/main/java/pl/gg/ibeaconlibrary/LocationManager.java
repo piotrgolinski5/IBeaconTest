@@ -23,8 +23,17 @@ public class LocationManager {
     private final String mData = "[{\"name\":\"1\",\"address\":\"ED:87:2B:A3:36:0B\",\"lat\":0.0001,\"lng\":-0.0001},{\"name\":\"2\",\"address\":\"F5:BD:7A:48:8A:98\",\"lat\":0,\"lng\":-0.0001},{\"name\":\"3\",\"address\":\"DF:5C:53:50:B4:D2\",\"lat\":0,\"lng\":0.0001},{\"name\":\"4\",\"address\":\"D8:E5:C2:F6:0E:14\",\"lat\":0.0001,\"lng\":0.0001}]";
 
     public class LocationBeacon {
+        public LocationBeacon(String name,
+                              double lat,
+                              double lng) {
+            this.name = name;
+            this.lat = lat;
+            this.lng = lng;
+
+        }
+
         String name;
-        String address;
+
         double lat;
         double lng;
     }
@@ -34,13 +43,18 @@ public class LocationManager {
 
     public LocationManager() {
         mGson = new Gson();
-        mList = new ArrayList<>();
+       // mList = new ArrayList<>();
     }
 
     public void loadData() {
         Type listType = new TypeToken<ArrayList<LocationBeacon>>() {
         }.getType();
         mList = new Gson().fromJson(mData, listType);
+
+    }
+
+    public void setData(List<LocationBeacon> list){
+        mList = list;
     }
 
     public List<LocationBeacon> getList() {
@@ -49,7 +63,7 @@ public class LocationManager {
 
     public LocationManager.LocationBeacon getLocationBeacon(String beaconAddress) {
         for (LocationBeacon locationBeacon : mList) {
-            if (locationBeacon.address.equals(beaconAddress)) {
+            if (locationBeacon.name.equals(beaconAddress)) {
                 return locationBeacon;
             }
         }
@@ -59,7 +73,7 @@ public class LocationManager {
 
     private boolean mFirstIteration = true;
     private static final int countOfAlghoritms = 4;
-    private double[]  mFilteredLat = new double[countOfAlghoritms];
+    private double[] mFilteredLat = new double[countOfAlghoritms];
     private double[] mFilteredLng = new double[countOfAlghoritms];
     private double[] mCurrentLat = new double[countOfAlghoritms];
     private double[] mCurrentLng = new double[countOfAlghoritms];
@@ -94,19 +108,19 @@ public class LocationManager {
 
 
         if (mCurrentLat[0] != 0) {
-            if ((this.mCurrentLat[0] - tempCurrentLat < 0.0002 && this.mCurrentLat[0] - tempCurrentLat > -0.0002) || (this.mCurrentLng[0] - tempCurrentLng < 0.0002 && this.mCurrentLng[0] - tempCurrentLng > -0.0002)) {
+           // if ((this.mCurrentLat[0] - tempCurrentLat < 0.0002 && this.mCurrentLat[0] - tempCurrentLat > -0.0002) || (this.mCurrentLng[0] - tempCurrentLng < 0.0002 && this.mCurrentLng[0] - tempCurrentLng > -0.0002)) {
                 this.mCurrentLat[0] = tempCurrentLat;
                 this.mCurrentLng[0] = tempCurrentLng;
 
                 for (OnUserPositionChangedListener l : mPositionList) {
-                    l.positionChanged(getCurrentPosition(0), 0,0/*this.mMinMaxEstimatedError*/);
+                    l.positionChanged(getCurrentPosition(0), 0, 0/*this.mMinMaxEstimatedError*/);
                 }
-            }
+            //}
         } else {
             this.mCurrentLat[0] = tempCurrentLat;
             this.mCurrentLng[0] = tempCurrentLng;
             for (OnUserPositionChangedListener l : mPositionList) {
-                l.positionChanged(getCurrentPosition(0), 0,0/*this.mMinMaxEstimatedError*/);
+                l.positionChanged(getCurrentPosition(0), 0, 0/*this.mMinMaxEstimatedError*/);
             }
         }
 
@@ -116,8 +130,8 @@ public class LocationManager {
     }
 
     public LatLng getCurrentPosition(int type) {
-        if(type == 3 || type == 2 || type == 1){
-       //     return new LatLng(this.mCurrentLat[type], this.mCurrentLng[type]);
+        if (type == 3 || type == 2 || type == 1) {
+            //     return new LatLng(this.mCurrentLat[type], this.mCurrentLng[type]);
         }
         this.mFilteredLat[type] = (this.mCurrentLat[type] * FILTERING_FACTOR) + (this.mFilteredLat[type] * (1.0 - FILTERING_FACTOR));
         this.mFilteredLng[type] = (this.mCurrentLng[type] * FILTERING_FACTOR) + (this.mFilteredLng[type] * (1.0 - FILTERING_FACTOR));
@@ -131,6 +145,7 @@ public class LocationManager {
 
     //#############
     public double mMinMaxEstimatedError = 0;
+
     public void calculatePositionWithMINMAX(List<IBeacon> beaconList) {
         sortTransmitters(beaconList);
         BeaconSquare intersecting = null;
@@ -138,7 +153,7 @@ public class LocationManager {
         for (IBeacon it : beaconList) {
 
             IBeacon b = it;
-            if(b.mPosition == null){
+            if (b.mPosition == null) {
                 return;
             }
 
@@ -162,41 +177,44 @@ public class LocationManager {
             //calculateZone(getCurrentPosition());
             if (mMinMaxEstimatedError < 12.0)
                 for (OnUserPositionChangedListener l : mPositionList) {
-                    l.positionChanged(getCurrentPosition(1), this.mMinMaxEstimatedError,1);
+                    l.positionChanged(getCurrentPosition(1), this.mMinMaxEstimatedError, 1);
 
                 }
         }
 
     }
+
     private void sortTransmitters(List<IBeacon> beaconList) {
         BeaconComparator comparator = new BeaconComparator();
         Collections.sort(beaconList, comparator);
     }
+
     public class BeaconComparator implements Comparator<IBeacon> {
 
         @Override
         public int compare(IBeacon lhs, IBeacon rhs) {
             int returnVal = 0;
 
-            if(lhs.getRSSI() < rhs.getRSSI()){
-                returnVal =  1;
-            }else if(lhs.getRSSI() > rhs.getRSSI()){
-                returnVal =  -1;
-            }else if(lhs.getRSSI() == rhs.getRSSI()){
-                returnVal =  0;
+            if (lhs.getRSSI() < rhs.getRSSI()) {
+                returnVal = 1;
+            } else if (lhs.getRSSI() > rhs.getRSSI()) {
+                returnVal = -1;
+            } else if (lhs.getRSSI() == rhs.getRSSI()) {
+                returnVal = 0;
             }
             return returnVal;
         }
 
     }
+
     public class BeaconSquare {
 
         private double west, north, east, south, centerX, centerY, mRadius = 0;
         private LatLng center, ne, nw, se, sw;
 
-        public BeaconSquare(double x, double y, double radius){
+        public BeaconSquare(double x, double y, double radius) {
             mRadius = radius;
-            center = new LatLng(x,y);
+            center = new LatLng(x, y);
             ne = SphericalUtil.computeOffset(center, radius, 45);
             nw = SphericalUtil.computeOffset(center, radius, 315);
             sw = SphericalUtil.computeOffset(center, radius, 225);
@@ -207,7 +225,7 @@ public class LocationManager {
             east = ne.longitude;
         }
 
-        public BeaconSquare(double _north, double _east, double _south, double _west){
+        public BeaconSquare(double _north, double _east, double _south, double _west) {
             north = _north;
             south = _south;
             east = _east;
@@ -225,7 +243,7 @@ public class LocationManager {
             mRadius = SphericalUtil.computeDistanceBetween(center, ne);
         }
 
-        private boolean ifIntersects(BeaconSquare r){
+        private boolean ifIntersects(BeaconSquare r) {
             return this.north >= r.south &&
                     this.south <= r.north &&
                     this.east >= r.west &&
@@ -233,57 +251,59 @@ public class LocationManager {
 
         }
 
-        public BeaconSquare intersect(BeaconSquare r){
-            if(ifIntersects(r)){
+        public BeaconSquare intersect(BeaconSquare r) {
+            if (ifIntersects(r)) {
                 double _south = Math.max(this.south, r.south);
                 double _west = Math.max(this.west, r.west);
                 double _north = Math.min(this.north, r.north);
                 double _east = Math.min(this.east, r.east);
                 return new BeaconSquare(_north, _east, _south, _west);
-            }else{
+            } else {
                 return this;
             }
         }
 
-        public double getNorth(){
+        public double getNorth() {
             return north;
         }
 
-        public double getSouth(){
+        public double getSouth() {
             return south;
         }
 
-        public double getEast(){
+        public double getEast() {
             return east;
         }
 
-        public double getWest(){
+        public double getWest() {
             return west;
         }
 
-        public LatLng getCenter(){
+        public LatLng getCenter() {
             return new LatLng(centerX, centerY);
         }
 
-        public double getRadius(){
-            return this.mRadius/2;
+        public double getRadius() {
+            return this.mRadius / 2;
         }
     }
+
     ///#####################
     private void trimTransmitters(List<IBeacon> beaconList) {
         beaconList.subList(4, beaconList.size()).clear();
     }
+
     public void calculatePositionWithMaximumProbability(List<IBeacon> beaconList) {
         sortTransmitters(beaconList);
         if (beaconList.size() > 4)
             trimTransmitters(beaconList);
-        int counter =0;
-        for(IBeacon b : beaconList){
-            if(b.mPosition != null){
+        int counter = 0;
+        for (IBeacon b : beaconList) {
+            if (b.mPosition != null) {
                 counter++;
             }
         }
-        if(counter<4){
+        if (counter < 4) {
             return;
         }
 
@@ -320,7 +340,7 @@ public class LocationManager {
         //calculateZone(getCurrentPosition());
 
         for (OnUserPositionChangedListener l : mPositionList) {
-            l.positionChanged(getCurrentPosition(2), this.mMinMaxEstimatedError,2);
+            l.positionChanged(getCurrentPosition(2), this.mMinMaxEstimatedError, 2);
         }
     }
 
@@ -368,6 +388,7 @@ public class LocationManager {
             matrixB.add(row, 0, value);
         }
     }
+
     //########
     public void userLocation(List<IBeacon> beaconsList) {
         double x_user = 0;
@@ -380,7 +401,7 @@ public class LocationManager {
 
             double r;
             try {
-                r =b.getDistanceForAlgorithm();
+                r = b.getDistanceForAlgorithm();
             } catch (NullPointerException e) {
                 continue;
             }
@@ -404,7 +425,7 @@ public class LocationManager {
             this.mCurrentLat[3] = x_user;
 
             for (OnUserPositionChangedListener l : mPositionList) {
-                l.positionChanged(getCurrentPosition(3), this.mMinMaxEstimatedError,3);
+                l.positionChanged(getCurrentPosition(3), this.mMinMaxEstimatedError, 3);
             }
         }
 
@@ -453,7 +474,7 @@ public class LocationManager {
         this.mCurrentLat[3] = x_user;
 
         for (OnUserPositionChangedListener l : mPositionList) {
-            l.positionChanged(getCurrentPosition(3), this.mMinMaxEstimatedError,3);
+            l.positionChanged(getCurrentPosition(3), this.mMinMaxEstimatedError, 3);
         }
     }
 

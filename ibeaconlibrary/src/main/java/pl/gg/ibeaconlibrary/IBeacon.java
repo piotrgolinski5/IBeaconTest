@@ -34,9 +34,9 @@ public class IBeacon {
         this.mTimeOut = 0;
 
         this.isEddyStone = DiscoveryUtils.isEddystoneSpecificFrame(scanRecord);
-        this.mTXPower = DiscoveryUtils.getTXPower(this.isEddyStone, scanRecord);
+//        this.mTXPower = DiscoveryUtils.getTXPower(this.isEddyStone, scanRecord);
 
-        L.e(StringUtils.addStrings("added ", deviceName, " RSSI ", rssi, " address ", this.mAddress, " distance ", getDistance(), " ", DistanceUtils.getFilteredDistance(this)));
+        //L.e(StringUtils.addStrings("added ", deviceName, " RSSI ", rssi, " address ", this.mAddress, " distance ", getDistance(), " ", DistanceUtils.getFilteredDistance(this)));
     }
 
     public int checkTimeout() {
@@ -80,13 +80,13 @@ public class IBeacon {
     }
     public double getDistanceForAlgorithm() {
         double distance =(float) Math.pow(this.getRadius(), 8);
-        L.e(StringUtils.addStrings("Name ", this.mName, " distance ",distance , " rssi ", this.mRSSI ));
+      //  L.e(StringUtils.addStrings("Name ", this.mName, " distance ",distance , " rssi ", this.mRSSI ));
         return distance;
     }
 
     private double getRadius() {
         double radius = 100 - Math.min(Math.max(30, -1 * this.mRSSI), 100);
-        L.e(StringUtils.addStrings("Name ", this.mName, " radius ",radius , " rssi ", this.mRSSI ));
+        //L.e(StringUtils.addStrings("Name ", this.mName, " radius ",radius , " rssi ", this.mRSSI ));
         return radius;
     }
 }

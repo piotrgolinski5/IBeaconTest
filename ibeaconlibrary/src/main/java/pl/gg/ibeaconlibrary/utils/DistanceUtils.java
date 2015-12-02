@@ -10,7 +10,7 @@ import pl.gg.ibeaconlibrary.IBeacon;
 public class DistanceUtils {
     public final static int CONST_A = -59;
     public final static int CONST_N = 2;
-    private final static double kFilteringFactor = 0.44;
+    private final static double kFilteringFactor = 0.22;
     private final static double distanceFactor = 1.0;
 
     public static double getFilteredDistance(IBeacon beacon) {
