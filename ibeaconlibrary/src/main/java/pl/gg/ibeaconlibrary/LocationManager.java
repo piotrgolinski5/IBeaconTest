@@ -62,9 +62,11 @@ public class LocationManager {
     }
 
     public LocationManager.LocationBeacon getLocationBeacon(String beaconAddress) {
-        for (LocationBeacon locationBeacon : mList) {
-            if (locationBeacon.name.equals(beaconAddress)) {
-                return locationBeacon;
+        if(mList != null) {
+            for (LocationBeacon locationBeacon : mList) {
+                if (locationBeacon.name.equals(beaconAddress)) {
+                    return locationBeacon;
+                }
             }
         }
 

@@ -1,9 +1,11 @@
 package pl.gg.samplebeacon;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 
 import java.util.Iterator;
 import java.util.List;
@@ -17,19 +19,25 @@ import pl.gg.ibeaconlibrary.utils.StringUtils;
 import pl.gg.samplebeacon.views.GGCanvasView;
 
 /**
- * Created by xxx on 24.11.2015.
+ * Created by test on 02.12.2015.
  */
-public class BeaconRangeActivity extends GGBaseActivity {
+public class CardsActivity extends ActionBarActivity {
+    private GGCanvasView mCanvasView;
+    private APGBluetoothManager mBluetoothManager;
     private List<IBeacon> mBeacons;
-
+    //https://support.softax.pl/bugzilla/attachment.cgi?id=172049
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_beacon_range);
+        getSupportActionBar().ge
 
         mCanvasView = (GGCanvasView) findViewById(R.id.activity_beacon_range_vCanvas);
         mCanvasView.setGGCanvasViewListener(mGGCanvasViewListener);
         mCanvasView.setBackgroundColor(Color.parseColor("#2f343a"));
+
+        mBluetoothManager = APGBluetoothManager.getInstance();
+        mBluetoothManager.setBeaconTypeScan(BeaconType.ALL);
     }
 
     private GGCanvasView.GGCanvasViewListener mGGCanvasViewListener = new GGCanvasView.GGCanvasViewListener() {
@@ -51,8 +59,8 @@ public class BeaconRangeActivity extends GGBaseActivity {
                         int xPos = index * (width / size);
                         int yPos = 100;
                         int heightView = height - yPos - 50;
-                        yPos = (int) (heightView - (heightView * (distance / 35))) + yPos;
-                        mCanvasView.drawText(((int) distance) + "", xPos, 30);
+                        yPos = (int) (heightView - (heightView * (distance/35))) + yPos;
+                        mCanvasView.drawText(((int)distance) + "", xPos, 30);
                         mCanvasView.drawText(beacon.getDeviceName(), xPos, yPos - 60);
                         mCanvasView.drawCircle(xPos, yPos, 50);
                         index++;
@@ -71,19 +79,26 @@ public class BeaconRangeActivity extends GGBaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        mBluetoothManager.startManager(CardsActivity.this);
         mBluetoothManager.setOnBeaconListChangedListener(mOnBeaconListChangedListener);
+        mCanvasView.onStart();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        mBluetoothManager.stopManager();
         mBluetoothManager.removeOnBeaconListChangedListener(mOnBeaconListChangedListener);
+        mCanvasView.onStop();
     }
 
     private APGBluetoothManager.OnBeaconListChangedListener mOnBeaconListChangedListener = new APGBluetoothManager.OnBeaconListChangedListener() {
         @Override
         public void onBeaconListChangedListener(List<IBeacon> beacons) {
+            L.e(StringUtils.addStrings("onBeaconListChangedListener ", beacons.size()));
+            // if (mBeacons == null) {
             mBeacons = beacons;
+            //}
         }
     };
 }

@@ -26,9 +26,7 @@ import pl.gg.samplebeacon.views.GGCanvasView;
 /**
  * Created by xxx on 30.11.2015.
  */
-public class RegionsActivity extends Activity {
-    private GGCanvasView mCanvasView;
-    private APGBluetoothManager mBluetoothManager;
+public class RegionsActivity extends GGBaseActivity {
     private List<Rect> mRooms;
 
     @Override
@@ -40,8 +38,6 @@ public class RegionsActivity extends Activity {
         mCanvasView.setGGCanvasViewListener(mGGCanvasViewListener);
         mCanvasView.setBackgroundColor(Color.parseColor("#2f343a"));
 
-        mBluetoothManager = APGBluetoothManager.getInstance();
-        mBluetoothManager.setBeaconTypeScan(BeaconType.ALL);
         mBluetoothManager.IS_USER_BEACON_REQUIRED = true;
     }
 
@@ -89,17 +85,13 @@ public class RegionsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        mBluetoothManager.startManager(RegionsActivity.this);
         mBluetoothManager.addOnUserPositionChanged(mOnUserPositionChangedListener);
-        mCanvasView.onStart();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mBluetoothManager.stopManager();
         mBluetoothManager.removeOnUserPositionChanged(mOnUserPositionChangedListener);
-        mCanvasView.onStop();
     }
 
     double x=-1,y;

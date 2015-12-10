@@ -19,4 +19,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <Button
+        android:text="Cards"
+        android:layout_marginTop="10dp"
+        android:id="@+id/activity_main_btnCards"
+        android:layout_below="@+id/activity_main_btnRegions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
 </RelativeLayout>
