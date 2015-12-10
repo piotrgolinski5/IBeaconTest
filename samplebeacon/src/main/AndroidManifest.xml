@@ -18,6 +18,8 @@
         </activity>
         <activity android:name="pl.gg.samplebeacon.BeaconRangeActivity"></activity>
         <activity android:name="pl.gg.samplebeacon.RegionsActivity"></activity>
+        <activity android:name="pl.gg.samplebeacon.CardsActivity"></activity>
+        <activity android:name="pl.gg.samplebeacon.LineNavigationActivity"></activity>
     </application>
 
 </manifest>

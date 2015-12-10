@@ -34,6 +34,13 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, CardsActivity.class));
             }
         });
+
+        findViewById(R.id.activity_main_btnNavigation).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, LineNavigationActivity.class));
+            }
+        });
     }
 
 }

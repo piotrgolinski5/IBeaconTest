@@ -28,6 +28,7 @@ public class APGBluetoothManager {
     private BluetoothAdapter mBluetoothAdapter;
     private LocationManager mLocationManager;
     public static boolean IS_USER_BEACON_REQUIRED = false;
+    private int maxBeacons = 9999;
 
     public String mStickyBeacon = "";
     private boolean mIsScanning = false;
@@ -350,7 +351,7 @@ public class APGBluetoothManager {
 
     private void notifyOnBeaconListChanged() {
         for (OnBeaconListChangedListener beaconListChangedListener : mOnBeaconListChangedListeners) {
-            beaconListChangedListener.onBeaconListChangedListener(new ArrayList<IBeacon>(mIBeacons.values()));
+            beaconListChangedListener.onBeaconListChangedListener(new ArrayList<IBeacon>(mIBeacons.values()).subList(0, maxBeacons > mIBeacons.size() ? mIBeacons.size() : maxBeacons));
         }
     }
 
@@ -389,5 +390,9 @@ public class APGBluetoothManager {
 
     public LocationManager getLocationManager() {
         return mLocationManager;
+    }
+
+    public void setMaxBeacons(int maxBeacons) {
+        this.maxBeacons = maxBeacons;
     }
 }

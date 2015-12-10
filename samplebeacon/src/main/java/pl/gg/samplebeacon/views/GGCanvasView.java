@@ -24,7 +24,7 @@ public class GGCanvasView extends View {
     private Canvas mCanvas;
     private int mBackgroundColor = -1;
     private boolean mIsDrawing = false;
-
+boolean canInvalidate = true;
     public GGCanvasView(Context c, AttributeSet attrs) {
         super(c, attrs);
         mActivity = (Activity) c;
@@ -43,7 +43,7 @@ public class GGCanvasView extends View {
                 while (mIsDrawing) {
                     try {
                         mActivity.runOnUiThread(mInvalidate);
-                        Thread.sleep(1000 / 2);
+                        Thread.sleep(1000 / 30);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -71,6 +71,7 @@ public class GGCanvasView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        canInvalidate = false;
         mCanvas = canvas;
         if(mBackgroundColor != -1){
             canvas.drawColor(mBackgroundColor);
@@ -80,6 +81,7 @@ public class GGCanvasView extends View {
         if (mGGCanvasViewListener != null) {
              mGGCanvasViewListener.onDraw(canvas);
         }
+        canInvalidate = true;
     }
 
     public void setGGCanvasViewListener(GGCanvasViewListener listener) {
@@ -105,7 +107,9 @@ public class GGCanvasView extends View {
     private Runnable mInvalidate = new Runnable() {
         @Override
         public void run() {
-            invalidate();
+            if(canInvalidate) {
+                invalidate();
+            }
         }
     };
 
